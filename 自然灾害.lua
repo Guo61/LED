@@ -854,7 +854,7 @@ Tabs.Home:Button({
     end
 })
 
-Tsbs.Home:Button({
+Tabs.Home:Button({
     Title = "同款LAT加密",
     Desc = "点击复制",
     Callback = function()

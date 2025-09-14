@@ -1,6 +1,42 @@
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Guo61/Cat-/refs/heads/main/main.lua"))()
 
 local Confirmed = false
+
+function identifyDevice()
+    local userInputService = game:GetService("UserInputService")
+    local platform = userInputService:GetPlatform()
+    
+    if platform == Enum.Platform.Windows or platform == Enum.Platform.OSX or platform == Enum.Platform.Linux then
+        return "电脑 (PC)"
+    elseif platform == Enum.Platform.IOS then
+        return "移动端 (iOS)"
+    elseif platform == Enum.Platform.Android then
+        return "移动端 (Android)"
+    elseif platform == Enum.Platform.XBoxOne or platform == Enum.Platform.PS4 then
+        return "游戏主机"
+    else
+        return "其他设备"
+    end
+end
+
+function getDeviceThumbnail()
+    local userInputService = game:GetService("UserInputService")
+    local platform = userInputService:GetPlatform()
+    
+    if platform == Enum.Platform.Windows or platform == Enum.Platform.OSX or platform == Enum.Platform.Linux then
+        return "https://img.icons8.com/ios-filled/150/ffffff/computer.png"
+    elseif platform == Enum.Platform.IOS then
+        return "https://img.icons8.com/ios-filled/150/ffffff/iphone.png"
+    elseif platform == Enum.Platform.Android then
+        return "https://img.icons8.com/ios-filled/150/ffffff/android.png"
+    elseif platform == Enum.Platform.XBoxOne then
+        return "https://img.icons8.com/ios-filled/150/ffffff/xbox.png"
+    elseif platform == Enum.Platform.PS4 then
+        return "https://img.icons8.com/ios-filled/150/ffffff/play-station.png"
+    else
+        return "https://img.icons8.com/ios-filled/150/ffffff/device-unknown.png"
+    end
+end
 
 WindUI:Popup({
     Title = "LED v1.15",
@@ -81,48 +117,12 @@ Tabs.Home:Paragraph({
 
 Tabs.Home:Paragraph({
     Title = "设备信息",
-    Desc = "当前设备: " .. (identifyDevice() or "未知设备"),
+    Desc = "当前设备: " .. identifyDevice(),
     Image = "https://img.icons8.com/ios-filled/100/ffffff/computer.png",
     ImageSize = 42,
     Thumbnail = getDeviceThumbnail(),
-    ThumbnailSize = 120
+    ThumbnailSize = 80
 })
-
-function identifyDevice()
-    local userInputService = game:GetService("UserInputService")
-    local platform = userInputService:GetPlatform()
-    
-    if platform == Enum.Platform.Windows or platform == Enum.Platform.OSX or platform == Enum.Platform.Linux then
-        return "电脑 (PC)"
-    elseif platform == Enum.Platform.IOS then
-        return "移动端 (iOS)"
-    elseif platform == Enum.Platform.Android then
-        return "移动端 (Android)"
-    elseif platform == Enum.Platform.XBoxOne or platform == Enum.Platform.PS4 then
-        return "游戏主机"
-    else
-        return "其他设备"
-    end
-end
-
-function getDeviceThumbnail()
-    local userInputService = game:GetService("UserInputService")
-    local platform = userInputService:GetPlatform()
-    
-    if platform == Enum.Platform.Windows or platform == Enum.Platform.OSX or platform == Enum.Platform.Linux then
-        return "https://img.icons8.com/ios-filled/150/ffffff/computer.png"
-    elseif platform == Enum.Platform.IOS then
-        return "https://img.icons8.com/ios-filled/150/ffffff/iphone.png"
-    elseif platform == Enum.Platform.Android then
-        return "https://img.icons8.com/ios-filled/150/ffffff/android.png"
-    elseif platform == Enum.Platform.XBoxOne then
-        return "https://img.icons8.com/ios-filled/150/ffffff/xbox.png"
-    elseif platform == Enum.Platform.PS4 then
-        return "https://img.icons8.com/ios-filled/150/ffffff/play-station.png"
-    else
-        return "https://img.icons8.com/ios-filled/150/ffffff/device-unknown.png"
-    end
-end
 
 Tabs.Home:Paragraph({
     Title = "欢迎",
@@ -258,59 +258,58 @@ Tabs.Home:Toggle({
     Title = "防甩飞",
     Desc = "不要和甩飞同时开启!",
     Callback = function(state)
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
+        if state then
+            local Players = game:GetService("Players")
+            local RunService = game:GetService("RunService")
 
-local MAX_VELOCITY_MAGNITUDE = 80
+            local MAX_VELOCITY_MAGNITUDE = 80
+            local TELEPORT_BACK_ON_FLING = true
+            local lastPositions = {}
 
-local TELEPORT_BACK_ON_FLING = true
+            Players.PlayerAdded:Connect(function(player)
+                player.CharacterAdded:Connect(function(character)
+                    local humanoid = character:WaitForChild("Humanoid")
+                    local rootPart = character:WaitForChild("HumanoidRootPart")
 
-local lastPositions = {}
-
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        local humanoid = character:WaitForChild("Humanoid")
-        local rootPart = character:WaitForChild("HumanoidRootPart")
-
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        
-        lastPositions[player.UserId] = rootPart.Position
-    end)
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    if lastPositions[player.UserId] then
-        lastPositions[player.UserId] = nil
-    end
-end)
-
-RunService.Heartbeat:Connect(function()
-    for _, player in ipairs(Players:GetPlayers()) do
-        local character = player.Character
-        if character then
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
-            local humanoid = character:FindFirstChild("Humanoid")
-            
-            if rootPart and humanoid and humanoid.Health > 0 then
-                local currentVelocity = rootPart.AssemblyLinearVelocity
-                local velocityMagnitude = currentVelocity.Magnitude
-
-                if velocityMagnitude > MAX_VELOCITY_MAGNITUDE then
-                    print("检测到玩家 " .. player.Name .. " 速度异常: " .. tostring(velocityMagnitude))
+                    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+                    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
                     
-                    if TELEPORT_BACK_ON_FLING and lastPositions[player.UserId] then
-                        rootPart.CFrame = CFrame.new(lastPositions[player.UserId])
-                    end
-                    
-                    rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                else
                     lastPositions[player.UserId] = rootPart.Position
+                end)
+            end)
+
+            antiWalkFlingConn = RunService.Heartbeat:Connect(function()
+                for _, player in ipairs(Players:GetPlayers()) do
+                    local character = player.Character
+                    if character then
+                        local rootPart = character:FindFirstChild("HumanoidRootPart")
+                        local humanoid = character:FindFirstChild("Humanoid")
+                        
+                        if rootPart and humanoid and humanoid.Health > 0 then
+                            local currentVelocity = rootPart.AssemblyLinearVelocity
+                            local velocityMagnitude = currentVelocity.Magnitude
+
+                            if velocityMagnitude > MAX_VELOCITY_MAGNITUDE then
+                                if TELEPORT_BACK_ON_FLING and lastPositions[player.UserId] then
+                                    rootPart.CFrame = CFrame.new(lastPositions[player.UserId])
+                                end
+                                
+                                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                            else
+                                lastPositions[player.UserId] = rootPart.Position
+                            end
+                        end
+                    end
                 end
+            end)
+        else
+            if antiWalkFlingConn then
+                antiWalkFlingConn:Disconnect()
+                antiWalkFlingConn = nil
             end
         end
     end
-end)
+})
 
 local function setPlayerHealth(healthValue)
     local player = game.Players.LocalPlayer
@@ -549,7 +548,7 @@ Tabs.Home:Button({
 })
 Tabs.Home:Button({
     Title = "无限跳",
-    Desc = "开启后无法关闭",
+    Desc = "重置角色即可关闭",
     Callback = function()
         pcall(function() loadstring(game:HttpGet("https://pastebin.com/raw/V5PQy3y0", true))() end)
     end
@@ -857,7 +856,7 @@ Tabs.Home:Button({
 
 if Tabs.NaturalDisastersTab then
     Tabs.NaturalDisastersTab:Toggle({
-        Title = "在水上行走",
+        Title = "水上行走",
         Desc = "允许在水面上行走",
         Callback = function(state)
             local waterLevel = game.Workspace:FindFirstChild("WaterLevel")
@@ -1207,7 +1206,7 @@ if Tabs.NaturalDisastersTab then
     local disasterImmunityEnabled = false
     Tabs.NaturalDisastersTab:Toggle({
         Title = "灾害免疫",
-        Desc = "尝试免疫某些灾害的伤害",
+        Desc = "火 烟雾 光芒",
         Callback = function(state)
             disasterImmunityEnabled = state
             if state then

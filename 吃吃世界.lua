@@ -1044,11 +1044,18 @@ Tabs.NaturalDisastersTab:Toggle({
                 Duration = 3
             })
             startLoop("AutoBox", function()
-                local args = {
-                    game:GetService("Players").LocalPlayer:WaitForChild("TimedRewards"):WaitForChild("SmallReward")
-                }
-                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RewardEvent"):FireServer(unpack(args))
-            end, 0.1)
+                local player = game:GetService("Players").LocalPlayer
+                local timedRewards = player:WaitForChild("TimedRewards")
+                for _, child in ipairs(timedRewards:GetChildren()) do
+                    if child:IsA("ObjectValue") or child:IsA("NumberValue") or child:IsA("BoolValue") then
+                        local args = {child}
+                        pcall(function()
+                            game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RewardEvent"):FireServer(unpack(args))
+                        end)
+                        task.wait(0.3)
+                    end
+                end
+            end, 300)
         else
             WindUI:Notify({
                 Title = "自动领箱子",

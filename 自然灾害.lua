@@ -121,7 +121,7 @@ Tabs.Home:Paragraph({
     Image = "https://img.icons8.com/ios-filled/100/ffffff/computer.png",
     ImageSize = 42,
     Thumbnail = getDeviceThumbnail(),
-    ThumbnailSize = 80
+    ThumbnailSize = 120
 })
 
 Tabs.Home:Paragraph({
@@ -854,6 +854,20 @@ Tabs.Home:Button({
     end
 })
 
+Tsbs.Home:Button({
+    Title = "同款LAT加密",
+    Desc = "点击复制",
+    Callback = function()
+        local obflink = "https://bypass.ceo/obfuscator"
+        setclipboard(obflink)
+        WindUI:Notify({
+            Title = "已复制LAT obf",
+            Content = "已复制至剪贴板",
+            Duration = 3
+        })
+    end
+})
+         
 if Tabs.NaturalDisastersTab then
     Tabs.NaturalDisastersTab:Toggle({
         Title = "水上行走",

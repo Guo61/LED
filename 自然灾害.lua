@@ -939,7 +939,7 @@ if Tabs.NaturalDisastersTab then
     messageLabel.Visible = false
     messageLabel.Parent = disasterMessage
 
-    Tabs.NaturalDisastersTab:Button({
+    Tabs.NaturalDisastersTab:Toggle({
         Title = "预测灾害",
         Desc = "显示下一个灾害的类型",
         Callback = function(state)

@@ -213,25 +213,59 @@ Tabs.Home:Toggle({
     Title = "防甩飞",
     Desc = "不要和甩飞同时开启!",
     Callback = function(state)
-        local player = game.Players.LocalPlayer
-        if state then
-            if antiWalkFlingConn then antiWalkFlingConn:Disconnect() end
-            local lastVelocity = Vector3.new()
-            antiWalkFlingConn = game:GetService("RunService").Stepped:Connect(function()
-                local character = player.Character
-                local hrp = character and character:FindFirstChild("HumanoidRootPart")
-                if not hrp then return end
-                local currentVelocity = hrp.Velocity
-                if (currentVelocity - lastVelocity).Magnitude > 100 then
-                    hrp.Velocity = lastVelocity
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local MAX_VELOCITY_MAGNITUDE = 80
+
+local TELEPORT_BACK_ON_FLING = true
+
+local lastPositions = {}
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        local humanoid = character:WaitForChild("Humanoid")
+        local rootPart = character:WaitForChild("HumanoidRootPart")
+
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        
+        lastPositions[player.UserId] = rootPart.Position
+    end)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if lastPositions[player.UserId] then
+        lastPositions[player.UserId] = nil
+    end
+end)
+
+RunService.Heartbeat:Connect(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if character then
+            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character:FindFirstChild("Humanoid")
+            
+            if rootPart and humanoid and humanoid.Health > 0 then
+                local currentVelocity = rootPart.AssemblyLinearVelocity
+                local velocityMagnitude = currentVelocity.Magnitude
+
+                if velocityMagnitude > MAX_VELOCITY_MAGNITUDE then
+                    print("检测到玩家 " .. player.Name .. " 速度异常: " .. tostring(velocityMagnitude))
+                    
+                    if TELEPORT_BACK_ON_FLING and lastPositions[player.UserId] then
+                        rootPart.CFrame = CFrame.new(lastPositions[player.UserId])
+                    end
+                    
+                    rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                else
+                    lastPositions[player.UserId] = rootPart.Position
                 end
-                lastVelocity = currentVelocity
-            end)
-        else
-            if antiWalkFlingConn then antiWalkFlingConn:Disconnect() end
+            end
         end
     end
-})
+end)
 
 local function setPlayerHealth(healthValue)
     local player = game.Players.LocalPlayer
@@ -847,7 +881,7 @@ if Tabs.NaturalDisastersTab then
     messageLabel.Visible = false
     messageLabel.Parent = disasterMessage
 
-    Tabs.NaturalDisastersTab:Toggle({
+    Tabs.NaturalDisastersTab:Button({
         Title = "预测灾害",
         Desc = "显示下一个灾害的类型",
         Callback = function(state)
@@ -857,7 +891,7 @@ if Tabs.NaturalDisastersTab then
             if state then
                 spawn(function()
                     while nextDisasterPrediction do
-                        wait(1)
+                        wait(3)
                         local character = game.Players.LocalPlayer.Character
                         if character then
                             local SurvivalTag = character:FindFirstChild("SurvivalTag")
@@ -975,7 +1009,7 @@ if Tabs.NaturalDisastersTab then
     })
 
     local autoVoteEnabled = false
-    Tabs.NaturalDisastersTab:Toggle({
+    Tabs.NaturalDisastersTab:Button({
         Title = "自动投票",
         Desc = "自动投票给随机地图",
         Callback = function(state)

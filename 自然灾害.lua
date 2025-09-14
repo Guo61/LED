@@ -80,6 +80,51 @@ Tabs.Home:Paragraph({
 })
 
 Tabs.Home:Paragraph({
+    Title = "设备信息",
+    Desc = "当前设备: " .. (identifyDevice() or "未知设备"),
+    Image = "https://img.icons8.com/ios-filled/100/ffffff/computer.png",
+    ImageSize = 42,
+    Thumbnail = getDeviceThumbnail(),
+    ThumbnailSize = 120
+})
+
+function identifyDevice()
+    local userInputService = game:GetService("UserInputService")
+    local platform = userInputService:GetPlatform()
+    
+    if platform == Enum.Platform.Windows or platform == Enum.Platform.OSX or platform == Enum.Platform.Linux then
+        return "电脑 (PC)"
+    elseif platform == Enum.Platform.IOS then
+        return "移动端 (iOS)"
+    elseif platform == Enum.Platform.Android then
+        return "移动端 (Android)"
+    elseif platform == Enum.Platform.XBoxOne or platform == Enum.Platform.PS4 then
+        return "游戏主机"
+    else
+        return "其他设备"
+    end
+end
+
+function getDeviceThumbnail()
+    local userInputService = game:GetService("UserInputService")
+    local platform = userInputService:GetPlatform()
+    
+    if platform == Enum.Platform.Windows or platform == Enum.Platform.OSX or platform == Enum.Platform.Linux then
+        return "https://img.icons8.com/ios-filled/150/ffffff/computer.png"
+    elseif platform == Enum.Platform.IOS then
+        return "https://img.icons8.com/ios-filled/150/ffffff/iphone.png"
+    elseif platform == Enum.Platform.Android then
+        return "https://img.icons8.com/ios-filled/150/ffffff/android.png"
+    elseif platform == Enum.Platform.XBoxOne then
+        return "https://img.icons8.com/ios-filled/150/ffffff/xbox.png"
+    elseif platform == Enum.Platform.PS4 then
+        return "https://img.icons8.com/ios-filled/150/ffffff/play-station.png"
+    else
+        return "https://img.icons8.com/ios-filled/150/ffffff/device-unknown.png"
+    end
+end
+
+Tabs.Home:Paragraph({
     Title = "欢迎",
     Desc = "需要时开启反挂机。脚本仍在更新中... 作者: Ccat\n脚本免费, 请勿倒卖。",
 })

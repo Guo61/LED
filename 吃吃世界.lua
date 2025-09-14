@@ -876,6 +876,7 @@ local main = {
     AutoBox = false,
     AutoTele = false,
     AutoMap = false,
+    AutoSellInterval = 300,
     teleThread = nil
 }
 
@@ -959,6 +960,7 @@ Tabs.NaturalDisastersTab:Toggle({
 
 Tabs.NaturalDisastersTab:Toggle({
     Title = "自动卖",
+    Desc = "间隔为300s",
     Image = "bird",
     Value = main.AutoSell,
     Callback = function(state)
@@ -971,7 +973,7 @@ Tabs.NaturalDisastersTab:Toggle({
             })
             startLoop("AutoSell", function()
                 game:GetService("Players").LocalPlayer.Character.Events.Sell:FireServer()
-            end, 0.1)
+            end, 300)
         else
             WindUI:Notify({
                 Title = "自动卖",
@@ -979,6 +981,26 @@ Tabs.NaturalDisastersTab:Toggle({
                 Duration = 3
             })
             stopLoop("AutoSell")
+        end
+    end
+})
+
+Tabs.NaturalDisastersTab:Slider({
+    Title = "设置间隔时间",
+    Desc = "可输入(秒)",
+    Value = { Min = 1, Max = 600, Default = 300 },
+    Callback = function(val)
+        main.AutoSellInterval = val
+        if main.AutoSell then
+            stopLoop("AutoSell")
+            startLoop("AutoSell", function()
+                game:GetService("Players").LocalPlayer.Character.Events.Sell:FireServer()
+            end, val)
+            WindUI:Notify({
+                Title = "自动卖",
+                Content = "间隔时间已更新: " .. val .. "秒",
+                Duration = 3
+            })
         end
     end
 })
@@ -1001,7 +1023,36 @@ Tabs.NaturalDisastersTab:Toggle({
         else
             WindUI:Notify({
                 Title = "自动领箱子",
-                Content = "自动抓已关闭",
+                Content = "自动领箱子已关闭",
+                Duration = 3
+            })
+            stopLoop("AutoBox")
+        end
+    end
+})
+
+Tabs.NaturalDisastersTab:Toggle({
+    Title = "自动领箱子",
+    Image = "bird",
+    Value = main.AutoBox,
+    Callback = function(state)
+        main.AutoBox = state
+        if state then
+            WindUI:Notify({
+                Title = "自动领箱子",
+                Content = "自动领箱子已开启",
+                Duration = 3
+            })
+            startLoop("AutoBox", function()
+                local args = {
+                    game:GetService("Players").LocalPlayer:WaitForChild("TimedRewards"):WaitForChild("SmallReward")
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RewardEvent"):FireServer(unpack(args))
+            end, 0.1)
+        else
+            WindUI:Notify({
+                Title = "自动领箱子",
+                Content = "自动领箱子已关闭",
                 Duration = 3
             })
             stopLoop("AutoBox")

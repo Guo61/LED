@@ -253,60 +253,69 @@ Tabs.Home:Button({
         loadstring(game:HttpGet("https://pastebin.com/raw/zqyDSUWX"))()
     end
 })
+
 local antiWalkFlingConn
+local antiFlingActive = false
+local antiFlingLoop = nil
+
 Tabs.Home:Toggle({
     Title = "防甩飞",
     Desc = "不要和甩飞同时开启!",
     Callback = function(state)
+           Callback = function(state)
         if state then
-            local Players = game:GetService("Players")
-            local RunService = game:GetService("RunService")
-
-            local MAX_VELOCITY_MAGNITUDE = 80
-            local TELEPORT_BACK_ON_FLING = true
-            local lastPositions = {}
-
-            Players.PlayerAdded:Connect(function(player)
-                player.CharacterAdded:Connect(function(character)
-                    local humanoid = character:WaitForChild("Humanoid")
-                    local rootPart = character:WaitForChild("HumanoidRootPart")
-
-                    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-                    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            antiFlingActive = true
+            WindUI:Notify({
+                Title = "防甩飞",
+                Content = "防甩飞已开启",
+                Duration = 3
+            })
+            
+            antiFlingLoop = task.spawn(function()
+                local lastSafeCFrame = nil
+                while antiFlingActive do
+                    local character = game.Players.LocalPlayer.Character
+                    local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso"))
                     
-                    lastPositions[player.UserId] = rootPart.Position
-                end)
-            end)
-
-            antiWalkFlingConn = RunService.Heartbeat:Connect(function()
-                for _, player in ipairs(Players:GetPlayers()) do
-                    local character = player.Character
-                    if character then
-                        local rootPart = character:FindFirstChild("HumanoidRootPart")
-                        local humanoid = character:FindFirstChild("Humanoid")
-                        
-                        if rootPart and humanoid and humanoid.Health > 0 then
-                            local currentVelocity = rootPart.AssemblyLinearVelocity
-                            local velocityMagnitude = currentVelocity.Magnitude
-
-                            if velocityMagnitude > MAX_VELOCITY_MAGNITUDE then
-                                if TELEPORT_BACK_ON_FLING and lastPositions[player.UserId] then
-                                    rootPart.CFrame = CFrame.new(lastPositions[player.UserId])
-                                end
-                                
-                                rootPart.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                            else
-                                lastPositions[player.UserId] = rootPart.Position
+                    if root then
+                        for _, part in pairs(character:GetDescendants()) do
+                            if part:IsA("BodyMover") or part:IsA("BodyVelocity") or part:IsA("BodyGyro") or 
+                               part:IsA("BodyThrust") or part:IsA("BodyAngularVelocity") then
+                                part:Destroy()
                             end
                         end
+                        
+                        local maxVel = 100
+                        local vel = root.Velocity
+                        if vel.Magnitude > maxVel then
+                            root.Velocity = Vector3.new(
+                                math.clamp(vel.X, -maxVel, maxVel),
+                                math.clamp(vel.Y, -maxVel, maxVel),
+                                math.clamp(vel.Z, -maxVel, maxVel)
+                            )
+                        end
+                        
+                        if not lastSafeCFrame or (root.Position - lastSafeCFrame.Position).Magnitude < 20 then
+                            lastSafeCFrame = root.CFrame
+                        elseif (root.Position - lastSafeCFrame.Position).Magnitude > 50 then
+                            root.CFrame = lastSafeCFrame
+                            root.Velocity = Vector3.new(0, 0, 0)
+                        end
                     end
+                    task.wait(0.05)
                 end
             end)
         else
-            if antiWalkFlingConn then
-                antiWalkFlingConn:Disconnect()
-                antiWalkFlingConn = nil
+            antiFlingActive = false
+            if antiFlingLoop then
+                task.cancel(antiFlingLoop)
+                antiFlingLoop = nil
             end
+            WindUI:Notify({
+                Title = "防甩飞",
+                Content = "防甩飞已关闭",
+                Duration = 3
+            })
         end
     end
 })

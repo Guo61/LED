@@ -2,6 +2,26 @@ local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Guo61/
 
 local Confirmed = false
 
+local currentUserCount = 0
+
+local function trackUsage()
+    pcall(function()
+        local currentCountResponse = game:HttpGet("https://api.countapi.xyz/get/ccat-led-script/users", true)
+        if currentCountResponse then
+            local data = game:GetService("HttpService"):JSONDecode(currentCountResponse)
+            if data and data.value then
+                currentUserCount = data.value
+                WindUI:Notify({
+                    Title = "使用统计",
+                    Content = "当前使用总数: " .. tostring(data.value),
+                    Duration = 5
+                })
+            end
+        end
+    end)
+end
+
+trackUsage()
 function identifyDevice()
     local userInputService = game:GetService("UserInputService")
     local platform = userInputService:GetPlatform()
@@ -55,7 +75,7 @@ WindUI:Popup({
 
 repeat wait() until Confirmed
 local Window = WindUI:CreateWindow({
-    Title = "LED Hub",
+    Title = "LED Eat",
     Icon = "rbxassetid://129260712070622",
     IconThemed = true,
     Author = "感谢游玩",
@@ -1170,6 +1190,19 @@ Tabs.Misc:Button({
             Content = "LED Hub v1.20\n作者: Ccat\nQQ:3395858053",
             Duration = 10
         })
+    end
+})
+
+Tabs.Misc:Button({
+    Title = "查看使用总数",
+    Desc = "显示此脚本的总使用次数",
+    Callback = function()
+        WindUI:Notify({
+            Title = "使用统计",
+            Content = "当前使用总数: " .. tostring(currentUserCount),
+            Duration = 5
+        })
+        trackUsage()
     end
 })
 
